@@ -5,9 +5,6 @@
 //.rodata
 .global kalman //as.pdf : p254
 
-
-//Your assembly code
-
 // Kalman subroutine
 // R0 - base address of struct (q, r, x, p, k)
 // S0 - measurement value
