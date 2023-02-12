@@ -32,8 +32,13 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-
-
+// Quintuple (q, r, x, p, k) implemented as a structure in C
+// Where:
+// q = process noise covariance
+// r = measurement noise covariance
+// x = estimated value
+// p = estimation error covariance
+// k = adaptive Kalman filter gain
 typedef struct _kalman_state{
     float q; //process noise covariance
     float r; //measurement noise covariance
@@ -42,12 +47,14 @@ typedef struct _kalman_state{
     float k; // adaptive Kalman filter gain.
 }kalman_state;
 
+typedef struct _stats{
+	float average;
+	float standardDev;
+}properties;
 
-
-extern int kalman(int *pointer, float measurement);
-
-int Kalmanfilter(float* InputArray, float* OutputArray, kalman_state* kstate, int Length);
-
+// kalman: inner function
+// @RETURN: 0 (if no error), -1 (if error)
+extern int kalman(kalman_state* kstate, float measurement);
 
 /* USER CODE END Includes */
 

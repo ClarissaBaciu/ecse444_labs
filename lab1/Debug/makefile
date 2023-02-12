@@ -60,8 +60,8 @@ all: main-build
 main-build: lab_1.elf secondary-outputs
 
 # Tool invocations
-lab_1.elf lab_1.map: $(OBJS) $(USER_OBJS) /Users/clarissabaciu/JAVA/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/STM32L4S5VITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "lab_1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/clarissabaciu/JAVA/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/STM32L4S5VITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="lab_1.map" -Wl,--gc-sections -static -L"/Users/clarissabaciu/JAVA/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib" -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+lab_1.elf lab_1.map: $(OBJS) $(USER_OBJS) /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/STM32L4S5VITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "lab_1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/STM32L4S5VITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="lab_1.map" -Wl,--gc-sections -static -L"/Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib" -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
