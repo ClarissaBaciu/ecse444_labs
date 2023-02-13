@@ -370,16 +370,12 @@ void processDataC(float* InputArray, float* OutputArray, int Length, float* diff
 	stats->standardDev = standardDev;
 }
 
-
+// This function is similar to KalmanFilterC, however, we use the built in functions provided by the
+// libarm_cortexM4lf_math.a library to use the CMSIS-CORE hardware.
 int KalmanFilterLib(float* InputArray, float* OutputArray, kalman_state* kstate, int Length) {
-	// This function is similar to KalmanFilterC, however, we use the built in functions provided by the
-	// libarm_cortexM4lf_math.a library to use the CMSIS-CORE hardware.
-
 	int condition = 0;
-	// temporary variables
-	float tmp1 = 0;
+	float tmp1 = 0;	// temporary variables
 	float tmp2 = 0;
-
 	for (int i = 0; i < Length; i++) {
 			float measurement = InputArray[i]; // post-increment pointer after de-referencing pointer
 			// (q, r, x, p, k)
@@ -404,6 +400,22 @@ int KalmanFilterLib(float* InputArray, float* OutputArray, kalman_state* kstate,
 				break;
 			}
 	}
+	return condition;
+}
+
+//wrapper function to run all KalmanFilter functions
+int KalmanFilter(float* InputArray, float* OutputArray, kalman_state* kstate, int Length){
+	//conditional compiling to choose between methods
+	int condition = 0;
+	#ifdef ASSEMBLY
+	condition = KalmanFilterAssemly(InputArray, OutputArray, kstate, Length);
+	#endif
+	#ifdef CCODE
+	condition = KalmanFilterC(InputArray, OutputArray, kstate, Length);
+	#endif
+	#ifdef LIBRARY
+	condition = KalmanFilterLib(InputArray, OutputArray, kstate, Length);
+	#endif
 	return condition;
 }
 
@@ -450,9 +462,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  ITM_Port32(31) = 1;
-	  //put your code in here for monitoring execution time
-	  ITM_Port32(31) = 2;
 
 	  // declare structs to be used
 	  properties statsC;
@@ -474,15 +483,23 @@ int main(void)
 	  kalman_state kstateLib = {.q = 0.1, .r = 0.1, .x = 5.0, .p = 0.1, .k = 0};
 
 	  // call subsequent filtering functions
+
 	  #ifdef ASSEMBLY
-	  KalmanFilterAssemly(measurements, OutputArrayA, &kstateA, Length);
+	  ITM_Port32(31) = 1; //timing SWB
+	  KalmanFilterAssemly(measurements, OutputArrayA, &kstateA, Length); //calling assembly kalman filter
+	  ITM_Port32(31) = 2;
 	  #endif
 	  #ifdef CCODE
-	  KalmanFilterC(measurements, OutputArrayC, &kstateC, Length);
+	  ITM_Port32(31) = 3;
+	  KalmanFilterC(measurements, OutputArrayC, &kstateC, Length); //calling C filter function
+	  ITM_Port32(31) = 4;
 	  #endif
 	  #ifdef LIBRARY
-	  KalmanFilterLib(measurements, OutputArrayLib, &kstateLib, Length);
+	  ITM_Port32(31) = 5;
+	  KalmanFilterLib(measurements, OutputArrayLib, &kstateLib, Length); //calling library function
+	  ITM_Port32(31) = 6;
 	  #endif
+
 
 	  // process the data accordingly (only for C and CMSIS-DSP library functions)
 	  // initialize other variables
@@ -495,18 +512,20 @@ int main(void)
 	  float convolutionArrayC[199] = {0};
 	  float convolutionArrayLib[199] = {0};
 
-	  // (float* InputArray, float* OutputArray, int Length,
-		//float* differenceArray, float* convolutionArray, properties* stats)
+
 	  #ifdef C_PROCESSING
-	  processDataC(measurements, OutputArrayC, Length, differenceArrayC,
-			  convolutionArrayC, correlationArrayC, &statsC);
+	  ITM_Port32(31) = 7;
+	  processDataC(measurements, OutputArrayC, Length, differenceArrayC, convolutionArrayC, correlationArrayC, &statsC);
+	  ITM_Port32(31) = 8;
 	  #endif
 	  #ifdef LIB_PROCESSING
-	  processDataLib(measurements, OutputArrayLib, Length, differenceArrayLib,
-			  convolutionArrayLib, correlationArrayLib, &statsLib);
+	  ITM_Port32(31) = 9;
+	  processDataLib(measurements, OutputArrayLib, Length, differenceArrayLib, convolutionArrayLib, correlationArrayLib, &statsLib);
+	  ITM_Port32(31) = 10;
 	  #endif
 
-	  int breakpoint = 0;
+//	  int breakpoint = 0;
+	  break;
 
 
   }
