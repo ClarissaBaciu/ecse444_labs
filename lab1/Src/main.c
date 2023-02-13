@@ -324,14 +324,25 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
 	for (int i = 0; i<Length; i++){
 		reversedOutputArray[i] = OutputArray[Length - 1 - i];
 	}
+//	for (int i = 0; i<Length*2-1; i++){
+//	  		correlationArray[i] = 0.0;
+//	  		for (int j = 0; j<Length; j++){
+//	  			if(i-j >= 0 && i-j < Length){
+//	  				correlationArray[i] = InputArray[j] * reversedOutputArray[i-j];
+//	  			}
+//	  		}
+//	  	}
+//	return;
+
+
 	for (int i = 0; i<Length*2-1; i++){
-	  		correlationArray[i] = 0.0;
-	  		for (int j = 0; j<Length; j++){
-	  			if(i-j >= 0 && i-j < Length){
-	  				correlationArray[i] = InputArray[j] * reversedOutputArray[i-j];
-	  			}
-	  		}
-	  	}
+		correlationArray[i] = 0.0;
+		for (int j = 0; j<Length; j++){
+			if(i-j >= 0 && i-j < Length){
+				correlationArray[i] += InputArray[j] * reversedOutputArray[i-j];
+			}
+		}
+	}
 	return;
 
 }
