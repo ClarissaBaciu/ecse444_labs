@@ -319,27 +319,16 @@ float calculateStandardDeviation(float* Array, int Length)
 //calculates cross correlation of two vectors
 void calculateCorrelation(float* InputArray, float* OutputArray, float* correlationArray, int Length) {
 
-
 	float reversedOutputArray[Length]; //create reversed array
 	for (int i = 0; i<Length; i++){
 		reversedOutputArray[i] = OutputArray[Length - 1 - i];
 	}
-//	for (int i = 0; i<Length*2-1; i++){
-//	  		correlationArray[i] = 0.0;
-//	  		for (int j = 0; j<Length; j++){
-//	  			if(i-j >= 0 && i-j < Length){
-//	  				correlationArray[i] = InputArray[j] * reversedOutputArray[i-j];
-//	  			}
-//	  		}
-//	  	}
-//	return;
 
-
-	for (int i = 0; i<Length*2-1; i++){
+	for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
 		correlationArray[i] = 0.0;
 		for (int j = 0; j<Length; j++){
 			if(i-j >= 0 && i-j < Length){
-				correlationArray[i] += InputArray[j] * reversedOutputArray[i-j];
+				correlationArray[i] += InputArray[j] * reversedOutputArray[i-j]; //convolve with reversed arrays
 			}
 		}
 	}
@@ -353,11 +342,11 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
 //calculate convolution of two vectors
 void convolve(float* InputArray, float* OutputArray, float* convolutionArray, int Length)
 {
-  for (int i = 0; i<Length*2-1; i++){
+  for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
   		convolutionArray[i] = 0.0;
   		for (int j = 0; j<Length; j++){
   			if(i-j >= 0 && i-j < Length){
-  				convolutionArray[i] += InputArray[j] * OutputArray[i-j];
+  				convolutionArray[i] += InputArray[j] * OutputArray[i-j]; //convolution
   			}
   		}
   	}
