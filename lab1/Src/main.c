@@ -302,6 +302,7 @@ float calculateAverage(float* Array, int Length) {
 }
 
 // Helper function for processDataC
+//calculate standard deviation of an array
 float calculateStandardDeviation(float* Array, int Length)
 {
 	float average = calculateAverage(Array, Length);
@@ -315,26 +316,37 @@ float calculateStandardDeviation(float* Array, int Length)
 }
 
 // Helper function for processDataC
+//calculates cross correlation of two vectors
 void calculateCorrelation(float* InputArray, float* OutputArray, float* correlationArray, int Length) {
+
+
+	float reversedOutputArray[Length]; //create reversed array
 	for (int i = 0; i<Length; i++){
+		reversedOutputArray[i] = OutputArray[Length - 1 - i];
+	}
+	for (int i = 0; i<Length*2-1; i++){
 	  		correlationArray[i] = 0.0;
 	  		for (int j = 0; j<Length; j++){
 	  			if(i-j >= 0 && i-j < Length){
-	  				correlationArray[i] = InputArray[j] * OutputArray[j-i];
+	  				correlationArray[i] = InputArray[j] * reversedOutputArray[i-j];
 	  			}
 	  		}
 	  	}
 	return;
+
 }
 
+
+
 // Helper function for processDataC
+//calculate convolution of two vectors
 void convolve(float* InputArray, float* OutputArray, float* convolutionArray, int Length)
 {
-  for (int i = 0; i<Length; i++){
+  for (int i = 0; i<Length*2-1; i++){
   		convolutionArray[i] = 0.0;
   		for (int j = 0; j<Length; j++){
   			if(i-j >= 0 && i-j < Length){
-  				convolutionArray[i] = InputArray[j] * OutputArray[i-j];
+  				convolutionArray[i] += InputArray[j] * OutputArray[i-j];
   			}
   		}
   	}
@@ -436,7 +448,8 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -524,7 +537,6 @@ int main(void)
 	  ITM_Port32(31) = 10;
 	  #endif
 
-//	  int breakpoint = 0;
 	  break;
 
 
