@@ -21,6 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <math.h>
+//#include "stm32l4xx_hal_adc_ex.h"
 
 /* USER CODE END Includes */
 
@@ -57,13 +59,13 @@ static void MX_ADC1_Init(void);
 /* USER CODE BEGIN 0 */
 
 #define VREFINT ((uint16_t*)(uint32_t)0x1FFF75AA)
-#define TS_CAL1 ((uint16_t*)(uint32_t)0x1FFF75A8)
-#define TS_CAL2 ((uint16_t*)(uint32_t)0x1FFF75CA)
+#define TS_CAL1 ((uint16_t*)(uint32_t)0x1FFF75A8) //TS ADC raw data acquired at a temperature of 30 °C  (AROUND 3 V)
+#define TS_CAL2 ((uint16_t*)(uint32_t)0x1FFF75CA) //TS ADC raw data acquired at a temperature of 130 °C
 
 //conditional compiling
 
-//#define LED_OF
-#define LED_TOG
+#define LED_OF
+//#define LED_TOG
 
 
 
@@ -101,7 +103,9 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
+//  HAL_ADCEx_CalibrationStart(); //improve accuarcy of ADC conversion by calibrating driver
   char status = 0;
+  char error = 0;
 
 
 
@@ -117,10 +121,13 @@ int main(void)
 
 	//program to turn lED on/off
 	#ifdef LED_OF
+	status = HAL_GPIO_ReadPin(myButton_GPIO_Port, myButton_Pin); //check button status
 	if (status == 0){
 	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET); //turn LED on if button is 0
+	  configure_channels(1); //temp
 	}else{
 	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET); //turn off LED
+	  configure_channels(0); //voltage
 	}
 	#endif
 
@@ -139,13 +146,17 @@ int main(void)
 
 
 
-	  HAL_ADC_Start(&hadc1);
-	  HAL_ADC_PollForConversion(&hadc1,HAL_MAX_DELAY);
-	  float raw_temp = HAL_ADC_GetValue(&hadc1);
 
+	HAL_ADC_Start(&hadc1); //activate peripheral and start conversion
+	HAL_ADC_PollForConversion(&hadc1,HAL_MAX_DELAY); //poll
+	float raw_temp = HAL_ADC_GetValue(&hadc1);
+	float vref = 3.0f * (*VREFINT)/raw_temp;
+	float temp = ((100.0f)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref/3.0)) - *TS_CAL1) + 30.0f;
 
-	  float vref = 3.0f * (*VREFINT)/raw_temp;
-	  float temp = ((100.0f)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref/3.0)) - *TS_CAL1) + 30.0f;
+	if (isnan(temp)){	//make sure value is valid
+		error = 1;
+	}
+
 
 
   }
@@ -261,26 +272,7 @@ static void MX_ADC1_Init(void)
 
 }
 
-//configure channels
-//0 for Vref and 1 for temp
-void configure_channels(int i){
-	ADC_ChannelConfTypeDef sConfig = {0};
-	if (i == 0){
-		sConfig.Channel = ADC_CHANNEL_VREFINT;
-	}else{
-		sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-	}
-	sConfig.Rank = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
-	sConfig.SingleDiff = ADC_SINGLE_ENDED;
-	sConfig.OffsetNumber = ADC_OFFSET_NONE;
-	sConfig.Offset = 0;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-	Error_Handler();
-	}
 
-}
 
 /**
   * @brief GPIO Initialization Function
@@ -315,6 +307,27 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+//configure channels
+//0 for Vref and 1 for temp
+void configure_channels(int i){
+	ADC_ChannelConfTypeDef sConfig = {0};
+	if (i == 0){
+		sConfig.Channel = ADC_CHANNEL_VREFINT;
+	}else{
+		sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+	}
+	sConfig.Rank = ADC_REGULAR_RANK_1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+	sConfig.SingleDiff = ADC_SINGLE_ENDED;
+	sConfig.OffsetNumber = ADC_OFFSET_NONE;
+	sConfig.Offset = 0;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+
+}
 
 /* USER CODE END 4 */
 
