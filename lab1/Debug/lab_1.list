@@ -37,15 +37,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  0002afb0  00000000  00000000  00057f80  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000f971  00000000  00000000  00082f30  2**0
+ 17 .debug_line   0000f96f  00000000  00000000  00082f30  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00104910  00000000  00000000  000928a1  2**0
+ 18 .debug_str    00104910  00000000  00000000  0009289f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      000000c5  00000000  00000000  001971b1  2**0
+ 19 .comment      000000c5  00000000  00000000  001971af  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000041dc  00000000  00000000  00197278  2**2
+ 20 .debug_frame  000041dc  00000000  00000000  00197274  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_loc    0000341f  00000000  00000000  0019b454  2**0
+ 21 .debug_loc    0000341f  00000000  00000000  0019b450  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -6557,7 +6557,6 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
  8023cb8:	466b      	mov	r3, sp
  8023cba:	4618      	mov	r0, r3
 
-
 	float reversedOutputArray[Length]; //create reversed array
  8023cbc:	6839      	ldr	r1, [r7, #0]
  8023cbe:	1e4b      	subs	r3, r1, #1
@@ -6617,12 +6616,9 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
  8023d36:	683b      	ldr	r3, [r7, #0]
  8023d38:	429a      	cmp	r2, r3
  8023d3a:	dbeb      	blt.n	8023d14 <calculateCorrelation+0x6c>
-//	  		}
-//	  	}
-//	return;
+	}
 
-
-	for (int i = 0; i<Length*2-1; i++){
+	for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
  8023d3c:	2300      	movs	r3, #0
  8023d3e:	623b      	str	r3, [r7, #32]
  8023d40:	e03c      	b.n	8023dbc <calculateCorrelation+0x114>
@@ -6649,7 +6645,7 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
  8023d66:	683a      	ldr	r2, [r7, #0]
  8023d68:	429a      	cmp	r2, r3
  8023d6a:	dd1d      	ble.n	8023da8 <calculateCorrelation+0x100>
-				correlationArray[i] += InputArray[j] * reversedOutputArray[i-j];
+				correlationArray[i] += InputArray[j] * reversedOutputArray[i-j]; //convolve with reversed arrays
  8023d6c:	6a3b      	ldr	r3, [r7, #32]
  8023d6e:	009b      	lsls	r3, r3, #2
  8023d70:	687a      	ldr	r2, [r7, #4]
@@ -6682,7 +6678,7 @@ void calculateCorrelation(float* InputArray, float* OutputArray, float* correlat
  8023db0:	683b      	ldr	r3, [r7, #0]
  8023db2:	429a      	cmp	r2, r3
  8023db4:	dbcf      	blt.n	8023d56 <calculateCorrelation+0xae>
-	for (int i = 0; i<Length*2-1; i++){
+	for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
  8023db6:	6a3b      	ldr	r3, [r7, #32]
  8023db8:	3301      	adds	r3, #1
  8023dba:	623b      	str	r3, [r7, #32]
@@ -6719,7 +6715,7 @@ void convolve(float* InputArray, float* OutputArray, float* convolutionArray, in
  8023dde:	60b9      	str	r1, [r7, #8]
  8023de0:	607a      	str	r2, [r7, #4]
  8023de2:	603b      	str	r3, [r7, #0]
-  for (int i = 0; i<Length*2-1; i++){
+  for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
  8023de4:	2300      	movs	r3, #0
  8023de6:	617b      	str	r3, [r7, #20]
  8023de8:	e03c      	b.n	8023e64 <convolve+0x8e>
@@ -6746,7 +6742,7 @@ void convolve(float* InputArray, float* OutputArray, float* convolutionArray, in
  8023e0e:	683a      	ldr	r2, [r7, #0]
  8023e10:	429a      	cmp	r2, r3
  8023e12:	dd1d      	ble.n	8023e50 <convolve+0x7a>
-  				convolutionArray[i] += InputArray[j] * OutputArray[i-j];
+  				convolutionArray[i] += InputArray[j] * OutputArray[i-j]; //convolution
  8023e14:	697b      	ldr	r3, [r7, #20]
  8023e16:	009b      	lsls	r3, r3, #2
  8023e18:	687a      	ldr	r2, [r7, #4]
@@ -6779,7 +6775,7 @@ void convolve(float* InputArray, float* OutputArray, float* convolutionArray, in
  8023e58:	683b      	ldr	r3, [r7, #0]
  8023e5a:	429a      	cmp	r2, r3
  8023e5c:	dbcf      	blt.n	8023dfe <convolve+0x28>
-  for (int i = 0; i<Length*2-1; i++){
+  for (int i = 0; i<Length*2-1; i++){ //iterate through length of output array
  8023e5e:	697b      	ldr	r3, [r7, #20]
  8023e60:	3301      	adds	r3, #1
  8023e62:	617b      	str	r3, [r7, #20]

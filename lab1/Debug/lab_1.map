@@ -4806,7 +4806,7 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
  .debug_macro   0x000000000002aba2      0x23b ./Src/sysmem.o
  .debug_macro   0x000000000002addd      0x1d3 ./Src/system_stm32l4xx.o
 
-.debug_line     0x0000000000000000     0xf971
+.debug_line     0x0000000000000000     0xf96f
  .debug_line    0x0000000000000000      0xaf5 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
  .debug_line    0x0000000000000af5      0xc9c ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.o
  .debug_line    0x0000000000001791      0xb51 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_gpio.o
@@ -4816,20 +4816,20 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
  .debug_line    0x00000000000059aa     0x3b68 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.o
  .debug_line    0x0000000000009512      0xd91 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.o
  .debug_line    0x000000000000a2a3       0x6a ./Src/kalman.o
- .debug_line    0x000000000000a30d      0xf6b ./Src/main.o
- .debug_line    0x000000000000b278      0x75f ./Src/stm32l4xx_hal_msp.o
- .debug_line    0x000000000000b9d7      0x7c3 ./Src/stm32l4xx_it.o
- .debug_line    0x000000000000c19a      0x830 ./Src/syscalls.o
- .debug_line    0x000000000000c9ca      0x526 ./Src/sysmem.o
- .debug_line    0x000000000000cef0      0x798 ./Src/system_stm32l4xx.o
- .debug_line    0x000000000000d688       0x83 ./Startup/startup_stm32l4s5vitx.o
- .debug_line    0x000000000000d70b      0x3c5 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_std_f32.o)
- .debug_line    0x000000000000dad0      0x2d9 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_mean_f32.o)
- .debug_line    0x000000000000dda9      0x9e6 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_correlate_f32.o)
- .debug_line    0x000000000000e78f      0x944 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_conv_f32.o)
- .debug_line    0x000000000000f0d3      0x2df /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_sub_f32.o)
- .debug_line    0x000000000000f3b2      0x2e0 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_mult_f32.o)
- .debug_line    0x000000000000f692      0x2df /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_add_f32.o)
+ .debug_line    0x000000000000a30d      0xf69 ./Src/main.o
+ .debug_line    0x000000000000b276      0x75f ./Src/stm32l4xx_hal_msp.o
+ .debug_line    0x000000000000b9d5      0x7c3 ./Src/stm32l4xx_it.o
+ .debug_line    0x000000000000c198      0x830 ./Src/syscalls.o
+ .debug_line    0x000000000000c9c8      0x526 ./Src/sysmem.o
+ .debug_line    0x000000000000ceee      0x798 ./Src/system_stm32l4xx.o
+ .debug_line    0x000000000000d686       0x83 ./Startup/startup_stm32l4s5vitx.o
+ .debug_line    0x000000000000d709      0x3c5 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_std_f32.o)
+ .debug_line    0x000000000000dace      0x2d9 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_mean_f32.o)
+ .debug_line    0x000000000000dda7      0x9e6 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_correlate_f32.o)
+ .debug_line    0x000000000000e78d      0x944 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_conv_f32.o)
+ .debug_line    0x000000000000f0d1      0x2df /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_sub_f32.o)
+ .debug_line    0x000000000000f3b0      0x2e0 /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_mult_f32.o)
+ .debug_line    0x000000000000f690      0x2df /Users/clarissabaciu/hd_documents/W2023/ECSE444/labs/ecse444_labs/lab1/lib/libarm_cortexM4lf_math.a(arm_add_f32.o)
 
 .debug_str      0x0000000000000000   0x104910
  .debug_str     0x0000000000000000    0xfa848 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
