@@ -53,7 +53,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void configure_channels(int i);
 
 /* USER CODE END PFP */
 
@@ -70,8 +70,8 @@ static void MX_ADC1_Init(void);
 
 //conditional compiling
 
-#define LED_OF
-//#define LED_TOG
+//#define LED_OF
+#define LED_TOG
 
 
 
@@ -116,8 +116,23 @@ int main(void)
 //  HAL_ADCEx_CalibrationStart(); //improve accuarcy of ADC conversion by calibrating driver
   char status = 0;
   char error = 0;
+
+
   float temp;
   float vref;
+  float vref_temp;
+
+
+  	//initialize voltage as it is needed for the temperature measurements
+	//voltage
+	configure_channels(0); 										//switch to voltage channel on ADC MUX
+	HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+	float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+	HAL_ADC_Stop(&hadc1);
+	vref = 3.0f * (*VREFINT)/raw_voltage;
+	printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
+
 
 
   /* USER CODE END 2 */
@@ -130,59 +145,66 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-//	//program to turn lED on/off
-//	#ifdef LED_OF
-//	status = HAL_GPIO_ReadPin(myButton_GPIO_Port, myButton_Pin); //check button status
-//	if (status == 0){
-//	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET); //turn LED on if button is 0
-//	  configure_channels(1); //temp
-//	}else{
-//	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET); //turn off LED
-//	  configure_channels(0); //voltage
-//	}
-//	#endif
-//
-//	//program to toggle LED
-//	#ifdef LED_TOG
-//	status = HAL_GPIO_ReadPin(myButton_GPIO_Port, myButton_Pin); //check button status
-//	if (status == 0){ //if button is on, toggle mode
-//	  float current = HAL_GPIO_ReadPin(myLed_GPIO_Port, myLed_Pin); //get current LED value
-//	  if (current == 0){  //if LED is currently off, toggle on
-//		  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET);
-//	  }else{ //if LED is currently on, toggle off
-//		  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
-//	  }
-//	}
-//	#endif
+	//program to turn lED on/off
+	#ifdef LED_OF
+	status = HAL_GPIO_ReadPin(myButton_GPIO_Port, myButton_Pin); //check button status
+	if (status == 0){
+	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET); //turn LED on if button is 0
+	  configure_channels(1); //temp
+	}else{
+	  HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET); //turn off LED
+	  configure_channels(0); //voltage
+	}
+	#endif
 
 
 
+	//program to toggle LED
+	//let LED off mode = voltage & LED ON => temperature
 
-	//TEMPERATURE
-	configure_channels(1); //configure temperature MUX channel
-	HAL_ADC_Start(&hadc1); 												//activate peripheral and start conversion
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  					//wait for completion
-	float raw_temp = HAL_ADC_GetValue(&hadc1);							//read sensor's digital value
+	#ifdef LED_TOG
+	status = HAL_GPIO_ReadPin(myButton_GPIO_Port, myButton_Pin); //check button status
+	if (status == 0){ //if button is on, toggle mode
+		float current = HAL_GPIO_ReadPin(myLed_GPIO_Port, myLed_Pin); //get current LED value
+		if (current == 0){  //if LED is currently off, toggle on
+			HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET);
+			printf("Turning on LED.\n Measuring temperature now.\n");
 
-	//v_ref value
-	//3.0 is characterized in the manufacturing process
-	float vref_temp = 3.0f * (*VREFINT)/raw_temp;
+		}else{ //if LED is currently on, toggle off
+			HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
+			printf("Turning off LED. \n Measuring voltage now.\n");
+		}
+	}
+	#endif
 
-	//calculation of temp based on sec. 21.4.32 of the doc.
-	//adc_value is adjusted if vref is not equal to 3V
-	temp = (((TS_CAL2_TEMP - TS_CAL1_TEMP)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref_temp/3.0)) - *TS_CAL1)) + 30.0f;
-    printf("temp = %3.3f%cC\n", temp, 176);                  // display chip's temperature (176 to display the degree sign)
+
+	float current = HAL_GPIO_ReadPin(myLed_GPIO_Port, myLed_Pin); //get current LED value
+	if (current == 0){ //if LED is off, measure voltage
+		//voltage
+		configure_channels(0); 										//switch to voltage channel on ADC MUX
+		HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+		float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+		HAL_ADC_Stop(&hadc1);
+		vref = 3.0f * (*VREFINT)/raw_voltage;
+		printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
+
+	}else{ //otherwise measure temperature
+
+		//TEMPERATURE
+		configure_channels(1);									 //configure temperature MUX channel
+		HAL_ADC_Start(&hadc1); 									//activate peripheral and start conversion
+		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  		//wait for completion
+		float raw_temp = HAL_ADC_GetValue(&hadc1);				//read sensor's digital value
+		HAL_ADC_Stop(&hadc1);
+		float temp = ((100.0/(*TS_CAL2 - *TS_CAL1)) * ((raw_temp * (vref/3.0)) - *TS_CAL1)) + 30.0;
+		printf("temp = %3.3f%cC\n", temp, 176);
+
+	}
+
     HAL_Delay(1000); //wait 1000 ms
 
 
-    //switch to voltage channel on ADC MUX
-    configure_channels(0); //voltage
-	HAL_ADC_Start(&hadc1); 												//activate peripheral and start conversion
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  					//wait for completion
-	float raw_voltage = HAL_ADC_GetValue(&hadc1);						//read sensor's digital value
-	vref = 3.0f * (*VREFINT)/raw_voltage;
-    printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
-    HAL_Delay(1000); //wait 1000 ms
 
 
   }
@@ -287,7 +309,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -338,6 +360,7 @@ static void MX_GPIO_Init(void)
 //configure channels
 //0 for Vref and 1 for temp
 void configure_channels(int i){
+
 	ADC_ChannelConfTypeDef sConfig = {0};
 	if (i == 0){
 		sConfig.Channel = ADC_CHANNEL_VREFINT;
@@ -345,7 +368,7 @@ void configure_channels(int i){
 		sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
 	}
 	sConfig.Rank = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+	sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
 	sConfig.SingleDiff = ADC_SINGLE_ENDED;
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;
 	sConfig.Offset = 0;
@@ -353,7 +376,6 @@ void configure_channels(int i){
 	{
 	Error_Handler();
 	}
-	return;
 
 }
 

@@ -32,7 +32,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32l4xx_hal_adc_ex.h"
-
+#include "stm32l4xx_hal_adc.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
