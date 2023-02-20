@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <math.h>
+#include <stdio.h>
 //#include "stm32l4xx_hal_adc_ex.h"
 
 /* USER CODE END Includes */
@@ -53,6 +54,7 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -66,7 +68,6 @@ static void MX_ADC1_Init(void);
 
 #define LED_OF
 //#define LED_TOG
-
 
 
 
@@ -144,7 +145,9 @@ int main(void)
 	}
 	#endif
 
-
+	printf("Hello world \n");
+	printf("some number %.6f \n",1.89);
+	HAL_Delay(1000); //delay 1000 ms
 
 
 	HAL_ADC_Start(&hadc1); //activate peripheral and start conversion
@@ -272,14 +275,11 @@ static void MX_ADC1_Init(void)
 
 }
 
-
-
 /**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
-
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -287,6 +287,7 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
@@ -327,6 +328,19 @@ void configure_channels(int i){
 	Error_Handler();
 	}
 
+}
+
+//function for printing to console (swb port 0)
+int _write(int file, char *ptr, int len)
+{
+  (void)file;
+  int DataIdx;
+
+  for (DataIdx = 0; DataIdx < len; DataIdx++)
+  {
+	  ITM_SendChar(*ptr++);
+  }
+  return len;
 }
 
 /* USER CODE END 4 */
