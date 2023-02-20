@@ -52,7 +52,6 @@ ADC_HandleTypeDef hadc1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
-void configure_channels(int i);
 /* USER CODE BEGIN PFP */
 
 
@@ -117,8 +116,9 @@ int main(void)
 //  HAL_ADCEx_CalibrationStart(); //improve accuarcy of ADC conversion by calibrating driver
   char status = 0;
   char error = 0;
+  float temp;
+  float vref;
 
-  float tempCelsius;
 
   /* USER CODE END 2 */
 
@@ -170,8 +170,8 @@ int main(void)
 
 	//calculation of temp based on sec. 21.4.32 of the doc.
 	//adc_value is adjusted if vref is not equal to 3V
-	float temp = (((TS_CAL2_TEMP - TS_CAL1_TEMP)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref_temp/3.0)) - *TS_CAL1)) + 30.0f;
-    printf("temp = %3.1f%cC\n", temp, 176);                  // display chip's temperature (176 to display the degree sign)
+	temp = (((TS_CAL2_TEMP - TS_CAL1_TEMP)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref_temp/3.0)) - *TS_CAL1)) + 30.0f;
+    printf("temp = %3.3f%cC\n", temp, 176);                  // display chip's temperature (176 to display the degree sign)
     HAL_Delay(1000); //wait 1000 ms
 
 
@@ -180,8 +180,8 @@ int main(void)
 	HAL_ADC_Start(&hadc1); 												//activate peripheral and start conversion
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  					//wait for completion
 	float raw_voltage = HAL_ADC_GetValue(&hadc1);						//read sensor's digital value
-	float vref = 3.0f * (*VREFINT)/raw_voltage;
-    printf("voltage = %3.1fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
+	vref = 3.0f * (*VREFINT)/raw_voltage;
+    printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
     HAL_Delay(1000); //wait 1000 ms
 
 
@@ -287,7 +287,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;

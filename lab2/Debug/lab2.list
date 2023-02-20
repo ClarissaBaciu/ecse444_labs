@@ -27,23 +27,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  000201dc  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00009cca  00000000  00000000  0002020c  2**0
+ 12 .debug_info   00009cd0  00000000  00000000  0002020c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00001a60  00000000  00000000  00029ed6  2**0
+ 13 .debug_abbrev 00001a66  00000000  00000000  00029edc  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000009d0  00000000  00000000  0002b938  2**3
+ 14 .debug_aranges 000009d0  00000000  00000000  0002b948  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 000008f8  00000000  00000000  0002c308  2**3
+ 15 .debug_ranges 000008f8  00000000  00000000  0002c318  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0002ba52  00000000  00000000  0002cc00  2**0
+ 16 .debug_macro  0002ba52  00000000  00000000  0002cc10  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000a6f0  00000000  00000000  00058652  2**0
+ 17 .debug_line   0000a6f0  00000000  00000000  00058662  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0010d963  00000000  00000000  00062d42  2**0
+ 18 .debug_str    0010d957  00000000  00000000  00062d52  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  001706a5  2**0
+ 19 .comment      00000050  00000000  00000000  001706a9  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000037ec  00000000  00000000  001706f8  2**2
+ 20 .debug_frame  000037ec  00000000  00000000  001706fc  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -9630,7 +9630,7 @@ int main(void)
 
 	//calculation of temp based on sec. 21.4.32 of the doc.
 	//adc_value is adjusted if vref is not equal to 3V
-	float temp = (((TS_CAL2_TEMP - TS_CAL1_TEMP)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref_temp/3.0)) - *TS_CAL1)) + 30.0f;
+	temp = (((TS_CAL2_TEMP - TS_CAL1_TEMP)/(*TS_CAL2 - *TS_CAL1))*((raw_temp * (vref_temp/3.0)) - *TS_CAL1)) + 30.0f;
  8003dc8:	4b47      	ldr	r3, [pc, #284]	; (8003ee8 <main+0x188>)
  8003dca:	881b      	ldrh	r3, [r3, #0]
  8003dcc:	461a      	mov	r2, r3
@@ -9691,7 +9691,7 @@ int main(void)
  8003e5a:	f7fc febd 	bl	8000bd8 <__aeabi_d2f>
  8003e5e:	4603      	mov	r3, r0
  8003e60:	60bb      	str	r3, [r7, #8]
-    printf("temp = %3.1f%cC\n", temp, 176);                  // display chip's temperature (176 to display the degree sign)
+    printf("temp = %3.3f%cC\n", temp, 176);                  // display chip's temperature (176 to display the degree sign)
  8003e62:	68b8      	ldr	r0, [r7, #8]
  8003e64:	f7fc fb88 	bl	8000578 <__aeabi_f2d>
  8003e68:	4602      	mov	r2, r0
@@ -9722,7 +9722,7 @@ int main(void)
  8003e9a:	ee07 0a90 	vmov	s15, r0
  8003e9e:	eef8 7a67 	vcvt.f32.u32	s15, s15
  8003ea2:	edc7 7a01 	vstr	s15, [r7, #4]
-	float vref = 3.0f * (*VREFINT)/raw_voltage;
+	vref = 3.0f * (*VREFINT)/raw_voltage;
  8003ea6:	4b0f      	ldr	r3, [pc, #60]	; (8003ee4 <main+0x184>)
  8003ea8:	881b      	ldrh	r3, [r3, #0]
  8003eaa:	ee07 3a90 	vmov	s15, r3
@@ -9732,7 +9732,7 @@ int main(void)
  8003eba:	ed97 7a01 	vldr	s14, [r7, #4]
  8003ebe:	eec6 7a87 	vdiv.f32	s15, s13, s14
  8003ec2:	edc7 7a00 	vstr	s15, [r7]
-    printf("voltage = %3.1fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
+    printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
  8003ec6:	6838      	ldr	r0, [r7, #0]
  8003ec8:	f7fc fb56 	bl	8000578 <__aeabi_f2d>
  8003ecc:	4602      	mov	r2, r0
@@ -9990,8 +9990,8 @@ static void MX_ADC1_Init(void)
   sConfig.Rank = ADC_REGULAR_RANK_1;
  8004038:	2306      	movs	r3, #6
  800403a:	607b      	str	r3, [r7, #4]
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
- 800403c:	2300      	movs	r3, #0
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+ 800403c:	2307      	movs	r3, #7
  800403e:	60bb      	str	r3, [r7, #8]
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
  8004040:	237f      	movs	r3, #127	; 0x7f
