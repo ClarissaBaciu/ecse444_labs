@@ -123,17 +123,6 @@ int main(void)
   float vref_temp;
 
 
-  	//initialize voltage as it is needed for the temperature measurements
-	//voltage
-	configure_channels(0); 										//switch to voltage channel on ADC MUX
-	HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
-	float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
-	HAL_ADC_Stop(&hadc1);
-	vref = 3.0f * (*VREFINT)/raw_voltage;
-	printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
-
-
 
   /* USER CODE END 2 */
 
@@ -168,25 +157,26 @@ int main(void)
 		float current = HAL_GPIO_ReadPin(myLed_GPIO_Port, myLed_Pin); //get current LED value
 		if (current == 0){  //if LED is currently off, toggle on
 			HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_SET);
-			printf("Turning on LED.\n Measuring temperature now.\n");
+			printf("Turning on LED.\nMeasuring temperature now.\n");
 
 		}else{ //if LED is currently on, toggle off
 			HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
-			printf("Turning off LED. \n Measuring voltage now.\n");
+			printf("Turning off LED. \nMeasuring voltage now.\n");
 		}
 	}
 	#endif
 
+	//measure voltage
+	configure_channels(0); 										//switch to voltage channel on ADC MUX
+	HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+	float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+	HAL_ADC_Stop(&hadc1);
+	vref = 3.0f * (*VREFINT)/raw_voltage;
+
 
 	float current = HAL_GPIO_ReadPin(myLed_GPIO_Port, myLed_Pin); //get current LED value
 	if (current == 0){ //if LED is off, measure voltage
-		//voltage
-		configure_channels(0); 										//switch to voltage channel on ADC MUX
-		HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
-		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
-		float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
-		HAL_ADC_Stop(&hadc1);
-		vref = 3.0f * (*VREFINT)/raw_voltage;
 		printf("voltage = %3.3fV\n", vref);                  // display chip's temperature (176 to display the degree sign)
 
 	}else{ //otherwise measure temperature
