@@ -50,6 +50,8 @@ DAC_HandleTypeDef hdac1;
 float temp;
 float vref;
 float vref_temp;
+int sawtooth_data;
+int triangle_data;
 
 /*
  * The following arrays are for a frequency of 65Hz, and an amplitude of 1V.
@@ -140,6 +142,11 @@ int main(void)
   int timestep = (int) 1/frequency/numSamples*1000; // get the timestep in ms
   int nb = 8; // number of bits in data
 
+  sawtooth_data = 0;
+  triangle_data = 0;
+  double sawtooth;
+  double triangle;
+
   int i = 0;
   while (1)
   {
@@ -147,10 +154,10 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	//HAL_DAC_setValue(sawtooth[i]);
-	double sawtooth = sawtoothArray[i];
-	double triangle = triangleArray[i];
-	int sawtooth_data = sawtooth*pow(2,nb)/3.4;
-	int triangle_data = triangle*pow(2,nb)/3.4;
+	sawtooth = sawtoothArray[i];
+	triangle = triangleArray[i];
+	sawtooth_data = sawtooth*pow(2,nb)/3.4;
+	triangle_data = triangle*pow(2,nb)/3.4;
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_8B_R, sawtooth_data);
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_8B_R, triangle_data);
     HAL_Delay(timestep); //Ts
