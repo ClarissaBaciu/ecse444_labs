@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <math.h>
+#define ARM_MATH_CM4
+#include "arm_math.h"
 #include <stdio.h>
 //#include "stm32l4xx_hal_adc_ex.h"
 
@@ -50,8 +52,9 @@ DAC_HandleTypeDef hdac1;
 float temp;
 float vref;
 float vref_temp;
-int sawtooth_data;
-int triangle_data;
+uint8_t sawtooth_data;
+uint8_t triangle_data;
+int8_t sin_data;
 
 /*
  * The following arrays are for a frequency of 65Hz, and an amplitude of 1V.
@@ -137,38 +140,77 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  // find vref
+  configure_channels(0); 										//switch to voltage channel on ADC MUX
+  HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+  float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+  HAL_ADC_Stop(&hadc1);
+  vref = 3.0f * (*VREFINT)/raw_voltage;
+
+  // initialize variables
   int frequency = 65;
   int numSamples = 4*frequency;
-  int timestep = (int) 1/frequency/numSamples*1000; // get the timestep in ms
+  double timestep = 1/frequency/numSamples*1000; // get the timestep in ms
   int nb = 8; // number of bits in data
 
+  // initialize DAC data
   sawtooth_data = 0;
   triangle_data = 0;
   double sawtooth;
   double triangle;
+  double sin;
+  sin_data = 0;
 
   int i = 0;
+  float rad = 0;
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
 	//HAL_DAC_setValue(sawtooth[i]);
 	sawtooth = sawtoothArray[i];
 	triangle = triangleArray[i];
-	sawtooth_data = sawtooth*pow(2,nb)/3.4;
-	triangle_data = triangle*pow(2,nb)/3.4;
-	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_8B_R, sawtooth_data);
-	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_8B_R, triangle_data);
-    HAL_Delay(timestep); //Ts
+	sawtooth_data = 3.4*sawtooth*pow(2,nb)/vref;
+	triangle_data = 3.4*triangle*pow(2,nb)/vref;
 
-    i++;
-	if (i == numSamples) {
+	// To test sawtooth signal, simply change the data variable name in the
+	// HAL_DAC_SetValue function!
+	HAL_Delay(0);
+	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_8B_R, triangle_data);
+	HAL_Delay(0);
+
+	// 10 samples
+    i += 26;
+	if (i >= numSamples) {
 		i = 0;
 	}
 
+	  /*
+	// arm_sin_f32 test
+	sin = 1 + arm_sin_f32(rad);
+	sin_data = 0.5*sin*pow(2,nb)/vref;
+	// write to DAC
+	// - add a delay of 3ms in total to achieve a 65 Hz signal
+	HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+    HAL_Delay(0); // 1.5ms
+	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_8B_R, sin_data);
+	HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
+	HAL_Delay(0); // 1.5ms
+
+	rad += 0.01*M_PI;
+	if (rad >= 2*M_PI) {
+		rad = 0;
+	}
+*/
+
 
   }
+  HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
 
 
 
