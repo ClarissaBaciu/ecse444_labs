@@ -148,10 +148,10 @@ int main(void)
   vref = 3.0f * (*VREFINT)/raw_voltage;
 
   // initialize variables
-  int frequency = 65;
-  int numSamples = 4*frequency;
-  double timestep = 1/frequency/numSamples*1000; // get the timestep in ms
-  int nb = 8; // number of bits in data
+//  int frequency = 65;
+//  int numSamples = 4*frequency;
+//  double timestep = 1/frequency/numSamples*1000; // get the timestep in ms
+//  int nb = 8; // number of bits in data
 
   // initialize DAC data
   sawtooth_data = 0;
@@ -186,7 +186,7 @@ int main(void)
 	// 15 samples
     i++;
 	if (i >= 15) {
-		i = 0;
+		i = 0; //after 15 samples, reset the loop
 	}
 
 	  /*
@@ -210,7 +210,7 @@ int main(void)
 
   }
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
-
+  HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
 
   /* USER CODE END 3 */
@@ -393,11 +393,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : myButton_Pin */
-  GPIO_InitStruct.Pin = myButton_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(myButton_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : myLed_Pin */
   GPIO_InitStruct.Pin = myLed_Pin;
@@ -406,9 +406,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(myLed_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+//callback function for interrupt
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == GPIO_PIN_13) { //verify pin
+		printf("Button has been pressed, entering call back function\n");
+		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+	}
+
+}
 
 //configure channels
 //0 for Vref and 1 for temp
