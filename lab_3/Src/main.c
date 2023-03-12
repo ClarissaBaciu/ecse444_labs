@@ -48,6 +48,8 @@ ADC_HandleTypeDef hadc1;
 
 DAC_HandleTypeDef hdac1;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 float temp;
 float vref;
@@ -69,6 +71,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void configure_channels(int i);
 
@@ -88,8 +91,6 @@ void configure_channels(int i);
 
 //conditional compiling
 
-//#define LED_OF
-#define LED_TOG
 
 
 
@@ -127,6 +128,7 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
 //  while(HAL_ADCEx_Calibration_Start(&hadc1,0) != HAL_OK);           // calibrate AD convertor
@@ -165,11 +167,28 @@ int main(void)
   float rad = 0;
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+
+  //start timer with interrupt
+  HAL_TIM_Base_Start_IT(&htim2);
+
   while (1)
   {
+
+	  uint32_t counter_value = __HAL_TIM_GET_COUNTER(&htim2); // Get the current counter value
+	  printf("Counter value: %lu\n", counter_value); // Print the counter value to the console
+	  uint32_t arr_value = __HAL_TIM_GET_AUTORELOAD(&htim2); // Get the current value of the auto-reload register (ARR)
+	  printf("ARR value: %lu\n", arr_value); // Print the ARR value to the console
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	//reset counter
+//	HAL_TIM_Base_Stop_IT(&htim2);
+
+	// Reset the counter and value registers to 0
+//	__HAL_TIM_SET_COUNTER(&htim2, 0);
+//	TIM2->ARR = 0;
+//	HAL_TIM_Base_Start_IT(&htim2);
+
 
 	//HAL_DAC_setValue(sawtooth[i]);
 	sawtooth = sawtoothArray[i];
@@ -209,6 +228,8 @@ int main(void)
 
 
   }
+
+  HAL_TIM_Base_Stop_IT(&htim2);  //stop timer
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
@@ -377,6 +398,45 @@ static void MX_DAC1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 4294967295;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_OnePulse_Init(&htim2, TIM_OPMODE_SINGLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -413,10 +473,26 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+//call back function for timer
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	if (htim->Instance == TIM2) {
+		uint32_t counter_value = __HAL_TIM_GET_COUNTER(&htim2); // Get the current counter value
+		printf("Counter value: %lu\n", counter_value); // Print the counter value to the console
+		uint32_t arr_value = __HAL_TIM_GET_AUTORELOAD(&htim2); // Get the current value of the auto-reload register (ARR)
+		printf("ARR value: %lu\n", arr_value); // Print the ARR value to the console
+		printf("Timer call back function, writing to DAC. \n");
+		HAL_IncTick();
+	}
+	// Reset the timer counter
+//	 __HAL_TIM_SET_COUNTER(htim, 0);
+}
+
+
 //callback function for interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_13) { //verify pin
-		printf("Button has been pressed, entering call back function\n");
+		printf("Button has been pressed, entering call back function for hardware interrupt. \n");
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
 	}
 
