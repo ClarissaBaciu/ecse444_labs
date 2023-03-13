@@ -62,6 +62,18 @@ uint16_t sin_data;
 int globalIndex;
 int secondsElapsed;
 
+uint16_t sin1kHz[44];
+uint16_t sin15kHz[30];
+uint16_t sin2kHz[22];
+
+int selector;
+
+#define SIZE1K 44
+#define SIZE15K 30
+#define SIZE2K 22
+
+
+
 /*
  * The following arrays are for a frequency of 65Hz, and an amplitude of 1V.
  * To adjust the amplitude, just multiply each element by a desired amplitude, A.
@@ -99,9 +111,7 @@ void configure_channels(int i);
 
 #undef TIMER
 #undef P1
-#undef SINTEST
-
-
+#define SINTEST
 
 
 
@@ -153,36 +163,70 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   // find vref
-  configure_channels(0); 										//switch to voltage channel on ADC MUX
-  HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
-  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
-  float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
-  HAL_ADC_Stop(&hadc1);
-  vref = 3.0f * (*VREFINT)/raw_voltage;
+//  configure_channels(0); 										//switch to voltage channel on ADC MUX
+//  HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+//  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+//  float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+//  HAL_ADC_Stop(&hadc1);
+//  vref = 3.0f * (*VREFINT)/raw_voltage;
 
   // initialize variables
 //  int frequency = 65;
 //  int numSamples = 4*frequency;
 //  double timestep = 1/frequency/numSamples*1000; // get the timestep in ms
-//  int nb = 8; // number of bits in data
+  int nb = 8; // number of bits in data
 
   // initialize DAC data
   sawtooth_data = 0;
   triangle_data = 0;
   globalIndex = 0;
   secondsElapsed = 0;
-  double sawtooth;
-  double triangle;
+//  double sawtooth;
+//  double triangle;
   double sin;
   sin_data = 0;
 
 
-  int i = 0;
+
   float rad = 0;
+
+#ifdef P1
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+
+#endif
+
+
   HAL_TIM_Base_Start_IT(&htim2);
+//  HAL_TIM_BASE_START(&htm2)
+
+
+
+
+  //start DMA
   printf("Starting while loop \n");
+
+  selector = 0; //to select between sin waves
+
+  //create the 1 kHz wave => 44 samples
+  for (int y = 0; y<SIZE1K ; y++){
+	  rad = (2*M_PI/SIZE1K)*y;
+	  sin1kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+  }
+
+  for (int y = 0; y<SIZE15K ; y++){
+  	  rad = (2*M_PI/SIZE15K)*y;
+  	  sin15kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+  }
+
+  for (int y = 0; y<SIZE2K ; y++){
+  	  rad = (2*M_PI/SIZE2K)*y;
+  	  sin2kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+  }
+
+  int i = 0;
+
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint16_t*)sin1kHz, SIZE1K, DAC_ALIGN_12B_R);
 
   while (1)
   {
@@ -195,11 +239,16 @@ int main(void)
 
 #ifdef P1 //not when timer is not working
 	//HAL_DAC_setValue(sawtooth[i]);
-	 sawtooth  = sawtoothArray[i];
-	 triangle = triangleArray[i];
+//	 sawtooth  = sawtoothArray[i];
+//	 triangle = triangleArray[i];
+//
+//	 sawtooth_data = sawtooth;
+//	 triangle_data = triangle;
+//
+	 sawtooth_data = sawtoothArray[i];
+	 triangle_data = triangleArray[i];
 
-	 sawtooth_data = sawtooth;
-	 triangle_data = triangle;
+
 	// To test sawtooth signal, simply change the data variable name in the
 	// HAL_DAC_SetValue function!
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangle_data);
@@ -214,24 +263,17 @@ int main(void)
 
 #ifdef SINTEST
 	// arm_sin_f32 test
-	sin = 1 + arm_sin_f32(rad);
-	sin_data = 0.5*sin*pow(2,nb)/vref;
-	// write to DAC
-	// - add a delay of 3ms in total to achieve a 65 Hz signal
-	HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-    HAL_Delay(0); // 1.5ms
-	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_8B_R, sin_data);
-	HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
-	HAL_Delay(0); // 1.5ms
-
-	rad += 0.01*M_PI;
-	if (rad >= 2*M_PI) {
-		rad = 0;
-	}
+//	sin_data = sin2kHz[i%22];
+//	// write to DAC
+////	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sin1kHz[i%14]);
+//	HAL_Delay(0); // 1.5ms
+//	printf("index : %d, value : %d \n", i%22,sin2kHz[i%22]);
+//	i++;
 
 #endif
-  }
 
+  }
+//stop dma
   HAL_TIM_Base_Stop_IT(&htim2);  //stop timer
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
@@ -422,7 +464,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 120;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 1000;
+  htim2.Init.Period = 23;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -531,10 +573,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //callback function for interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_13) { //verify pin
-		printf("Button has been pressed, entering call back function for hardware interrupt. \n");
+		printf("Button has been pressed, switching frequencies \n");
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+		if (globalIndex == 0){
+			selector++;
+		}
+		HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
+		// stop dma
+		if (selector%3 == 0){
+			printf("Switching to 1kH wave\n");
+			HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)sin1kHz, SIZE1K, DAC_ALIGN_12B_R);
+		}else if (selector%3 == 1){
+			printf("Switching to 1.5kH wave\n");
+			HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)sin15kHz, SIZE15K, DAC_ALIGN_12B_R);
+		}else if (selector%3 == 2){
+			printf("Switching to 2kH wave\n");
+			HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)sin2kHz, SIZE2K, DAC_ALIGN_12B_R);
+		}
+		globalIndex++;
+		selector++;
 	}
-
 }
 
 //configure channels
