@@ -47,6 +47,7 @@
 ADC_HandleTypeDef hadc1;
 
 DAC_HandleTypeDef hdac1;
+DMA_HandleTypeDef hdma_dac1_ch1;
 
 TIM_HandleTypeDef htim2;
 
@@ -73,6 +74,7 @@ int sawtoothArray[15] = { 0,  270,  540,  810, 1080, 1350, 1620, 1890, 2160, 243
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_TIM2_Init(void);
@@ -95,7 +97,9 @@ void configure_channels(int i);
 
 //conditional compiling
 
-#define TIMING
+#undef TIMER
+#undef P1
+#undef SINTEST
 
 
 
@@ -132,6 +136,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_TIM2_Init();
@@ -188,7 +193,7 @@ int main(void)
 
 
 
-#ifndef TIMER //not when timer is not working
+#ifdef P1 //not when timer is not working
 	//HAL_DAC_setValue(sawtooth[i]);
 	 sawtooth  = sawtoothArray[i];
 	 triangle = triangleArray[i];
@@ -206,7 +211,8 @@ int main(void)
 		i = 0; //after 15 samples, reset the loop
 	}
 #endif
-	  /*
+
+#ifdef SINTEST
 	// arm_sin_f32 test
 	sin = 1 + arm_sin_f32(rad);
 	sin_data = 0.5*sin*pow(2,nb)/vref;
@@ -222,9 +228,8 @@ int main(void)
 	if (rad >= 2*M_PI) {
 		rad = 0;
 	}
-*/
 
-
+#endif
   }
 
   HAL_TIM_Base_Stop_IT(&htim2);  //stop timer
@@ -373,7 +378,7 @@ static void MX_DAC1_Init(void)
   /** DAC channel OUT1 config
   */
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
   sConfig.DAC_HighFrequency = DAC_HIGH_FREQUENCY_INTERFACE_MODE_ABOVE_80MHZ;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
@@ -385,6 +390,7 @@ static void MX_DAC1_Init(void)
 
   /** DAC channel OUT2 config
   */
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -428,7 +434,7 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
   {
@@ -437,6 +443,23 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 
@@ -478,6 +501,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+#ifdef TIMER
 //call back function for timer
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim->Instance == TIM2) {
@@ -502,7 +526,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 
 }
-
+#endif
 
 //callback function for interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
