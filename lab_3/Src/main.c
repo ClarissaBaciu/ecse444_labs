@@ -48,7 +48,7 @@ ADC_HandleTypeDef hadc1;
 
 DAC_HandleTypeDef hdac1;
 
-TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim17;
 
 /* USER CODE BEGIN PV */
 float temp;
@@ -57,6 +57,10 @@ float vref_temp;
 uint16_t sawtooth_data;
 uint16_t triangle_data;
 uint16_t sin_data;
+
+int globalIndex;
+int timerSawtoothValue;
+int timerTriangleValue;
 
 /*
  * The following arrays are for a frequency of 65Hz, and an amplitude of 1V.
@@ -71,7 +75,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
-static void MX_TIM2_Init(void);
+static void MX_TIM17_Init(void);
 /* USER CODE BEGIN PFP */
 void configure_channels(int i);
 
@@ -90,6 +94,8 @@ void configure_channels(int i);
 
 
 //conditional compiling
+
+#define TIMING
 
 
 
@@ -128,7 +134,7 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
-  MX_TIM2_Init();
+  MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
 
 //  while(HAL_ADCEx_Calibration_Start(&hadc1,0) != HAL_OK);           // calibrate AD convertor
@@ -158,43 +164,34 @@ int main(void)
   // initialize DAC data
   sawtooth_data = 0;
   triangle_data = 0;
-  double sawtooth;
-  double triangle;
+  globalIndex = 0;
+//  double sawtooth;
+//  double triangle;
   double sin;
   sin_data = 0;
+
 
   int i = 0;
   float rad = 0;
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-
-  //start timer with interrupt
-  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim17);  //start timer with interrupt
 
   while (1)
   {
 
-	  uint32_t counter_value = __HAL_TIM_GET_COUNTER(&htim2); // Get the current counter value
-	  printf("Counter value: %lu\n", counter_value); // Print the counter value to the console
-	  uint32_t arr_value = __HAL_TIM_GET_AUTORELOAD(&htim2); // Get the current value of the auto-reload register (ARR)
-	  printf("ARR value: %lu\n", arr_value); // Print the ARR value to the console
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	//reset counter
-//	HAL_TIM_Base_Stop_IT(&htim2);
 
-	// Reset the counter and value registers to 0
-//	__HAL_TIM_SET_COUNTER(&htim2, 0);
-//	TIM2->ARR = 0;
-//	HAL_TIM_Base_Start_IT(&htim2);
 
+
+#ifndef TIMER //not when timer is not working
 
 	//HAL_DAC_setValue(sawtooth[i]);
-	sawtooth = sawtoothArray[i];
-	triangle = triangleArray[i];
-	sawtooth_data = sawtooth;
-	triangle_data = triangle;
+	sawtooth_data  = sawtoothArray[i];
+	triangle_data = triangleArray[i];
+
 
 	// To test sawtooth signal, simply change the data variable name in the
 	// HAL_DAC_SetValue function!
@@ -207,7 +204,7 @@ int main(void)
 	if (i >= 15) {
 		i = 0; //after 15 samples, reset the loop
 	}
-
+#endif
 	  /*
 	// arm_sin_f32 test
 	sin = 1 + arm_sin_f32(rad);
@@ -229,7 +226,7 @@ int main(void)
 
   }
 
-  HAL_TIM_Base_Stop_IT(&htim2);  //stop timer
+  HAL_TIM_Base_Stop_IT(&htim17);  //stop timer
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
@@ -398,41 +395,34 @@ static void MX_DAC1_Init(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
+  * @brief TIM17 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM2_Init(void)
+static void MX_TIM17_Init(void)
 {
 
-  /* USER CODE BEGIN TIM2_Init 0 */
+  /* USER CODE BEGIN TIM17_Init 0 */
 
-  /* USER CODE END TIM2_Init 0 */
+  /* USER CODE END TIM17_Init 0 */
 
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  /* USER CODE BEGIN TIM17_Init 1 */
 
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_OnePulse_Init(&htim2, TIM_OPMODE_SINGLE) != HAL_OK)
+  /* USER CODE END TIM17_Init 1 */
+  htim17.Instance = TIM17;
+  htim17.Init.Prescaler = 60000;
+  htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim17.Init.Period = 1;
+  htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim17.Init.RepetitionCounter = 0;
+  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
+  /* USER CODE BEGIN TIM17_Init 2 */
 
-  /* USER CODE END TIM2_Init 2 */
+  /* USER CODE END TIM17_Init 2 */
 
 }
 
@@ -476,16 +466,18 @@ static void MX_GPIO_Init(void)
 
 //call back function for timer
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if (htim->Instance == TIM2) {
-		uint32_t counter_value = __HAL_TIM_GET_COUNTER(&htim2); // Get the current counter value
-		printf("Counter value: %lu\n", counter_value); // Print the counter value to the console
-		uint32_t arr_value = __HAL_TIM_GET_AUTORELOAD(&htim2); // Get the current value of the auto-reload register (ARR)
-		printf("ARR value: %lu\n", arr_value); // Print the ARR value to the console
-		printf("Timer call back function, writing to DAC. \n");
-		HAL_IncTick();
+	if (htim->Instance == TIM17) {
+
+		printf("Timer call back function, writing to DAC.index : %d  \n",globalIndex%15);
+		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+		printf("triangle value : %d , sawtooth value : %d \n", triangleArray[globalIndex%15],sawtoothArray[globalIndex%15]);
+		timerSawtoothValue  = sawtoothArray[globalIndex%15];
+		timerTriangleValue = triangleArray[globalIndex%15];
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangleArray[globalIndex%15]);
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, sawtoothArray[globalIndex%15]);
+		globalIndex++;
+
 	}
-	// Reset the timer counter
-//	 __HAL_TIM_SET_COUNTER(htim, 0);
 }
 
 
