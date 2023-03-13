@@ -48,7 +48,7 @@ ADC_HandleTypeDef hadc1;
 
 DAC_HandleTypeDef hdac1;
 
-TIM_HandleTypeDef htim17;
+TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 float temp;
@@ -59,15 +59,15 @@ uint16_t triangle_data;
 uint16_t sin_data;
 
 int globalIndex;
-int timerSawtoothValue;
-int timerTriangleValue;
+int secondsElapsed;
 
 /*
  * The following arrays are for a frequency of 65Hz, and an amplitude of 1V.
  * To adjust the amplitude, just multiply each element by a desired amplitude, A.
  */
-int sawtoothArray[15] = { 0,  270,  540,  810, 1080, 1350, 1620, 1890, 2160, 2430, 2700, 2970, 3240, 3510,3780};
 int triangleArray[15] = {0, 530, 1060, 1590, 2120, 2650, 3180, 3710, 3180, 2650, 2120, 1590, 1060, 530, 0};
+int sawtoothArray[15] = { 0,  270,  540,  810, 1080, 1350, 1620, 1890, 2160, 2430, 2700, 2970, 3240, 3510,3780};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +75,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
-static void MX_TIM17_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void configure_channels(int i);
 
@@ -134,7 +134,7 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
-  MX_TIM17_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
 //  while(HAL_ADCEx_Calibration_Start(&hadc1,0) != HAL_OK);           // calibrate AD convertor
@@ -165,8 +165,9 @@ int main(void)
   sawtooth_data = 0;
   triangle_data = 0;
   globalIndex = 0;
-//  double sawtooth;
-//  double triangle;
+  secondsElapsed = 0;
+  double sawtooth;
+  double triangle;
   double sin;
   sin_data = 0;
 
@@ -175,7 +176,8 @@ int main(void)
   float rad = 0;
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-  HAL_TIM_Base_Start_IT(&htim17);  //start timer with interrupt
+  HAL_TIM_Base_Start_IT(&htim2);
+  printf("Starting while loop \n");
 
   while (1)
   {
@@ -187,18 +189,17 @@ int main(void)
 
 
 #ifndef TIMER //not when timer is not working
-
 	//HAL_DAC_setValue(sawtooth[i]);
-	sawtooth_data  = sawtoothArray[i];
-	triangle_data = triangleArray[i];
+	 sawtooth  = sawtoothArray[i];
+	 triangle = triangleArray[i];
 
-
+	 sawtooth_data = sawtooth;
+	 triangle_data = triangle;
 	// To test sawtooth signal, simply change the data variable name in the
 	// HAL_DAC_SetValue function!
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangle_data);
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, sawtooth_data);
 	HAL_Delay(0.5);
-
 	// 15 samples
     i++;
 	if (i >= 15) {
@@ -226,7 +227,7 @@ int main(void)
 
   }
 
-  HAL_TIM_Base_Stop_IT(&htim17);  //stop timer
+  HAL_TIM_Base_Stop_IT(&htim2);  //stop timer
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_1);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
@@ -395,34 +396,47 @@ static void MX_DAC1_Init(void)
 }
 
 /**
-  * @brief TIM17 Initialization Function
+  * @brief TIM2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM17_Init(void)
+static void MX_TIM2_Init(void)
 {
 
-  /* USER CODE BEGIN TIM17_Init 0 */
+  /* USER CODE BEGIN TIM2_Init 0 */
 
-  /* USER CODE END TIM17_Init 0 */
+  /* USER CODE END TIM2_Init 0 */
 
-  /* USER CODE BEGIN TIM17_Init 1 */
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE END TIM17_Init 1 */
-  htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 60000;
-  htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim17.Init.Period = 1;
-  htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim17.Init.RepetitionCounter = 0;
-  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 120;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM17_Init 2 */
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
 
-  /* USER CODE END TIM17_Init 2 */
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -466,18 +480,27 @@ static void MX_GPIO_Init(void)
 
 //call back function for timer
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if (htim->Instance == TIM17) {
-
-		printf("Timer call back function, writing to DAC.index : %d  \n",globalIndex%15);
+	if (htim->Instance == TIM2) {
+		printf("-------Timer call back function, writing to DAC ----- \n Index : %d, ",globalIndex%15);
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
-		printf("triangle value : %d , sawtooth value : %d \n", triangleArray[globalIndex%15],sawtoothArray[globalIndex%15]);
-		timerSawtoothValue  = sawtoothArray[globalIndex%15];
-		timerTriangleValue = triangleArray[globalIndex%15];
-		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangleArray[globalIndex%15]);
-		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, sawtoothArray[globalIndex%15]);
+		double t;
+		double s;
+		t = triangleArray[globalIndex%15];
+		s  = sawtoothArray[globalIndex%15];
+		triangle_data = t;
+		sawtooth_data  = s;
+
+		secondsElapsed = globalIndex/1000;//to get value in seconds
+		printf("Seconds elapsed:%d \n", secondsElapsed);
+		printf("Triangle value : %d \n Sawtooth value : %d \n", triangle_data, sawtooth_data);
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangle_data);
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R,sawtooth_data);
 		globalIndex++;
 
+		HAL_IncTick();
+
 	}
+
 }
 
 
