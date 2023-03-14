@@ -58,12 +58,12 @@ float vref_temp;
 uint16_t sawtooth_data;
 uint16_t triangle_data;
 uint16_t sin_data;
-uint16_t sin1k_data;
+
 
 int globalIndex;
 int secondsElapsed;
 
-uint16_t sin1kHz[44];
+int sin1kHz[44];
 uint16_t sin15kHz[30];
 uint16_t sin2kHz[22];
 
@@ -110,7 +110,7 @@ void configure_channels(int i);
 
 //conditional compiling
 
-#undef TIMER
+#define TIMER
 #undef P1
 #define SINTEST
 
@@ -191,29 +191,17 @@ int main(void)
 
   float rad = 0;
 
-#ifdef P1
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-
-#endif
-
-
-  HAL_TIM_Base_Start_IT(&htim2);
-//  HAL_TIM_BASE_START(&htm2)
-
-
-
 
   //start DMA
-  printf("Starting while loop \n");
+ // printf("Starting while loop \n");
 
   selector = 0; //to select between sin waves
 
   //create the 1 kHz wave => 44 samples
   for (int y = 0; y<SIZE1K ; y++){
 	  rad = (2*M_PI/SIZE1K)*y;
-	  sin1kHz[y] = (arm_sin_f32(rad)+ 1)*4096/vref; // +1 for positive and multiplication for amplitude
-
+	  sin1kHz[y] = (arm_sin_f32(rad)+ 1)*4096/3.3; // +1 for positive and multiplication for amplitude
+	  printf("%d", sin1kHz[y]);
   }
 
   for (int y = 0; y<SIZE15K ; y++){
@@ -227,9 +215,15 @@ int main(void)
   }
 
   int i = 0;
-  sin1k_data = 0;
 
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+  HAL_TIM_Base_Start_IT(&htim2);
+
+
+#ifdef DMA
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)sin1kHz, SIZE1K, DAC_ALIGN_12B_R);
+#endif
 
   while (1)
   {
@@ -274,9 +268,6 @@ int main(void)
 //	i++;
 
 #endif
-
-	sin1k_data = sin1kHz[i%44];
-	i++;
 
 
   }
@@ -427,7 +418,7 @@ static void MX_DAC1_Init(void)
   /** DAC channel OUT1 config
   */
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   sConfig.DAC_HighFrequency = DAC_HIGH_FREQUENCY_INTERFACE_MODE_ABOVE_80MHZ;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
@@ -439,7 +430,6 @@ static void MX_DAC1_Init(void)
 
   /** DAC channel OUT2 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -483,7 +473,7 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
   {
@@ -556,18 +546,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim->Instance == TIM2) {
 		printf("-------Timer call back function, writing to DAC ----- \n Index : %d, ",globalIndex%15);
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
-		double t;
-		double s;
-		t = triangleArray[globalIndex%15];
-		s  = sawtoothArray[globalIndex%15];
-		triangle_data = t;
-		sawtooth_data  = s;
 
-		secondsElapsed = globalIndex/1000;//to get value in seconds
-		printf("Seconds elapsed:%d \n", secondsElapsed);
-		printf("Triangle value : %d \n Sawtooth value : %d \n", triangle_data, sawtooth_data);
-		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangle_data);
-		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R,sawtooth_data);
+
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sin1kHz[globalIndex%44]);
+		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, sin2kHz[globalIndex%22]);
+		printf("1k sine wave value :index: %d :  %d\n",globalIndex%44, sin1kHz[globalIndex%44]);
+		printf("2k sine wave value :index: %d :  %d \n",globalIndex%22, sin1kHz[globalIndex%22]);
+
+
+//		secondsElapsed = globalIndex/1000;//to get value in seconds
+//		printf("Seconds elapsed:%d \n", secondsElapsed);
+//		printf("Triangle value : %d \n Sawtooth value : %d \n", triangle_data, sawtooth_data);
+//		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, triangle_data);
+//		HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R,sawtooth_data);
+
 		globalIndex++;
 
 		HAL_IncTick();
