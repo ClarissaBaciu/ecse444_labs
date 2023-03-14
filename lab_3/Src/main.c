@@ -58,6 +58,7 @@ float vref_temp;
 uint16_t sawtooth_data;
 uint16_t triangle_data;
 uint16_t sin_data;
+uint16_t sin1k_data;
 
 int globalIndex;
 int secondsElapsed;
@@ -163,12 +164,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   // find vref
-//  configure_channels(0); 										//switch to voltage channel on ADC MUX
-//  HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
-//  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
-//  float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
-//  HAL_ADC_Stop(&hadc1);
-//  vref = 3.0f * (*VREFINT)/raw_voltage;
+  configure_channels(0); 										//switch to voltage channel on ADC MUX
+  HAL_ADC_Start(&hadc1); 								   //activate peripheral and start conversion
+  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  	  //wait for completion
+  float raw_voltage = HAL_ADC_GetValue(&hadc1);		  //read sensor's digital value
+  HAL_ADC_Stop(&hadc1);
+  vref = 3.0f * (*VREFINT)/raw_voltage;
 
   // initialize variables
 //  int frequency = 65;
@@ -211,22 +212,24 @@ int main(void)
   //create the 1 kHz wave => 44 samples
   for (int y = 0; y<SIZE1K ; y++){
 	  rad = (2*M_PI/SIZE1K)*y;
-	  sin1kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+	  sin1kHz[y] = (arm_sin_f32(rad)+ 1)*4096/vref; // +1 for positive and multiplication for amplitude
+
   }
 
   for (int y = 0; y<SIZE15K ; y++){
   	  rad = (2*M_PI/SIZE15K)*y;
-  	  sin15kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+  	  sin15kHz[y] = (arm_sin_f32(rad)+ 1)*4096/vref; // +1 for positive and multiplication for amplitude
   }
 
   for (int y = 0; y<SIZE2K ; y++){
   	  rad = (2*M_PI/SIZE2K)*y;
-  	  sin2kHz[y] = (arm_sin_f32(rad)+ 1)*4096/2; // +1 for positive and multiplication for amplitude
+  	  sin2kHz[y] = (arm_sin_f32(rad)+ 1)*4096/vref; // +1 for positive and multiplication for amplitude
   }
 
   int i = 0;
+  sin1k_data = 0;
 
-  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint16_t*)sin1kHz, SIZE1K, DAC_ALIGN_12B_R);
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)sin1kHz, SIZE1K, DAC_ALIGN_12B_R);
 
   while (1)
   {
@@ -271,6 +274,10 @@ int main(void)
 //	i++;
 
 #endif
+
+	sin1k_data = sin1kHz[i%44];
+	i++;
+
 
   }
 //stop dma
