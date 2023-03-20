@@ -25,6 +25,16 @@
 #define ARM_MATH_CM4
 #include "arm_math.h"
 #include <stdio.h>
+#include "stm32l4s5i_iot01_tsensor.h"
+#include "stm32l4s5i_iot01.h"
+#include "stm32l4s5i_iot01_gyro.h"
+#include "stm32l4s5i_iot01_hsensor.h"
+#include "stm32l4s5i_iot01_magneto.h"
+#include "stm32l4s5i_iot01_psensor.h"
+
+
+
+
 //#include "stm32l4xx_hal_adc_ex.h"
 
 /* USER CODE END Includes */
@@ -53,27 +63,41 @@ I2C_HandleTypeDef hi2c2;
 
 TIM_HandleTypeDef htim2;
 
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
-float temp;
-float vref;
-float vref_temp;
-uint16_t sawtooth_data;
-uint16_t triangle_data;
-uint16_t sin_data;
+//float temp;
+//float vref;
+//float vref_temp;
+//uint16_t sawtooth_data;
+//uint16_t triangle_data;
+//uint16_t sin_data;
+//
+//
+//int globalIndex;
+//int secondsElapsed;
+//
+//int sin1kHz[44];
+//uint16_t sin15kHz[30];
+//uint16_t sin2kHz[22];
+//
+//int selector;
+//
+//#define SIZE1K 44
+//#define SIZE15K 30
+//#define SIZE2K 22
+//
 
 
-int globalIndex;
-int secondsElapsed;
+float temp_value;
+float hum_value;
+float mag_xyz[3];
+float acc_xyz[3];
+float gyro_xyz[3];
+float baro_value;
+float tof_value;
+float gest_value;
 
-int sin1kHz[44];
-uint16_t sin15kHz[30];
-uint16_t sin2kHz[22];
-
-int selector;
-
-#define SIZE1K 44
-#define SIZE15K 30
-#define SIZE2K 22
 
 
 
@@ -94,6 +118,7 @@ static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void configure_channels(int i);
 
@@ -150,12 +175,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-//  MX_DMA_Init();
-//  MX_ADC1_Init();
-//  MX_DAC1_Init();
-//  MX_TIM2_Init();
+  MX_DMA_Init();
+  MX_ADC1_Init();
+  MX_DAC1_Init();
+  MX_TIM2_Init();
   MX_I2C2_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  //initialize sensors
+  BSP_TSENSOR_Init();
+  BSP_HSENSOR_Init();
+  BSP_MAGNETO_Init();
+  BSP_ACCELERO_Init();
+  BSP_GYRO_Init();
+  BSP_PSENSOR_Init();
 
   /* USER CODE END 2 */
 
@@ -169,6 +203,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  temp_value = BSP_TSENSOR_ReadTemp();
+	  hum_value = BSP_HSENSOR_ReadHumidity();
+	  baro_value = BSP_PSENSOR_ReadPressure();
+	  BSP_MAGNETO_GetXYZ(mag_xyz);
+	  BSP_ACCELERO_AccGetXYZ(acc_xyz);
+	  BSP_GYRO_GetXYZ(gyro_xyz);
+	  tof_value = 0;
+	  gest_value = 0;
+
+//	  tof_value =
+//	  gest_value
+
+	  printf("temperature sensor value: %f\n", temp_value);
+	  printf("humidity sensor value: %f\n", hum_value);
+	  printf("barometer sensor value: %f\n", baro_value);
+
+	  printf("magnetometer sensor value: x: %f, y: %f, z: %f \n", mag_xyz[0], mag_xyz[1], mag_xyz[0]);
+	  printf("accelerator sensor value:  x: %f, y: %f, z: %f \n", acc_xyz[0], acc_xyz[1], acc_xyz[0]);
+	  printf("gyroscope sensor value:  x: %f, y: %f, z: %f \n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[0]);
+
+	  printf("--------------------\n");
+
+//	  printf("time of flight sensor value: %f\n", tof_value);
+//	  printf("gesture detection sensor value: %f\n", gest_value);
+
+	  HAL_Delay(2);
 
 
 
@@ -430,6 +490,54 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
 
 }
 

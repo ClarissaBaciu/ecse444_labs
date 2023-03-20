@@ -33,8 +33,25 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h \
+ ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h \
+ ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h \
- ../Inc/arm_math.h ../Drivers/CMSIS/Include/cmsis_compiler.h
+ ../Inc/arm_math.h ../Drivers/CMSIS/Include/cmsis_compiler.h \
+ ../Inc/stm32l4s5i_iot01_tsensor.h ../Inc/stm32l4s5i_iot01.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\hts221\hts221.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\hsensor.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h \
+ ../Inc/stm32l4s5i_iot01.h ../Inc/stm32l4s5i_iot01_gyro.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lsm6dsl\lsm6dsl.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\accelero.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\gyro.h \
+ ../Inc/stm32l4s5i_iot01_hsensor.h ../Inc/stm32l4s5i_iot01_magneto.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lis3mdl\lis3mdl.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\magneto.h \
+ ../Inc/stm32l4s5i_iot01_psensor.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lps22hb\lps22hb.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\psensor.h \
+ c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h
 ../Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Inc/stm32l4xx_hal_conf.h:
@@ -70,6 +87,26 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h:
+../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h:
+../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h:
 ../Inc/arm_math.h:
 ../Drivers/CMSIS/Include/cmsis_compiler.h:
+../Inc/stm32l4s5i_iot01_tsensor.h:
+../Inc/stm32l4s5i_iot01.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\hts221\hts221.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\hsensor.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h:
+../Inc/stm32l4s5i_iot01.h:
+../Inc/stm32l4s5i_iot01_gyro.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lsm6dsl\lsm6dsl.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\accelero.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\gyro.h:
+../Inc/stm32l4s5i_iot01_hsensor.h:
+../Inc/stm32l4s5i_iot01_magneto.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lis3mdl\lis3mdl.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\magneto.h:
+../Inc/stm32l4s5i_iot01_psensor.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\lps22hb\lps22hb.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\psensor.h:
+c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h:
