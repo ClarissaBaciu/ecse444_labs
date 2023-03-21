@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -56,38 +57,18 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-DAC_HandleTypeDef hdac1;
-DMA_HandleTypeDef hdma_dac1_ch1;
-
 I2C_HandleTypeDef hi2c2;
 
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
 
+osThreadId defaultTaskHandle;
+osThreadId myButtonTaskHandle;
+osThreadId myReadingsTaskHandle;
 /* USER CODE BEGIN PV */
-//float temp;
-//float vref;
-//float vref_temp;
-//uint16_t sawtooth_data;
-//uint16_t triangle_data;
-//uint16_t sin_data;
-//
-//
-//int globalIndex;
-//int secondsElapsed;
-//
-//int sin1kHz[44];
-//uint16_t sin15kHz[30];
-//uint16_t sin2kHz[22];
-//
-int selector;
-//
-//#define SIZE1K 44
-//#define SIZE15K 30
-//#define SIZE2K 22
-//
 
+int selector = 0;
 
 float temp_value;
 float hum_value;
@@ -114,12 +95,14 @@ int sawtoothArray[15] = { 0,  270,  540,  810, 1080, 1350, 1620, 1890, 2160, 243
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_DAC1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_USART1_UART_Init(void);
+void StartDefaultTask(void const * argument);
+void pollButton(void const * argument);
+void readInput(void const * argument);
+
 /* USER CODE BEGIN PFP */
 void configure_channels(int i);
 
@@ -139,9 +122,10 @@ void configure_channels(int i);
 
 //conditional compiling
 
-#define TIMER
-#undef P1
-#define SINTEST
+//#define I2C_TEST
+//#define UART_TEST
+#define BUTTON_TEST
+//#define RTOS_TEST
 
 
 
@@ -176,9 +160,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_ADC1_Init();
-  MX_DAC1_Init();
   MX_TIM2_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
@@ -194,58 +176,104 @@ int main(void)
   BSP_GYRO_Init();
   BSP_PSENSOR_Init();
 
-
+#ifdef RTOS_TEST
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of myButtonTask */
+  osThreadDef(myButtonTask, pollButton, osPriorityIdle, 0, 128);
+  myButtonTaskHandle = osThreadCreate(osThread(myButtonTask), NULL);
+
+  /* definition and creation of myReadingsTask */
+  osThreadDef(myReadingsTask, readInput, osPriorityIdle, 0, 128);
+  myReadingsTaskHandle = osThreadCreate(osThread(myReadingsTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  // HAL_TIM_Base_Start_IT(&htim6); // unsure of this line of code
+#endif
 
-
+#ifdef BUTTON_TEST
+  HAL_TIM_Base_Start_IT(&htim2);
+#endif
   while (1)
   {
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  temp_value = BSP_TSENSOR_ReadTemp();
-//	  hum_value = BSP_HSENSOR_ReadHumidity();
-//	  baro_value = BSP_PSENSOR_ReadPressure();
-//	  BSP_MAGNETO_GetXYZ(mag_xyz);
-//	  BSP_ACCELERO_AccGetXYZ(acc_xyz);
-//	  BSP_GYRO_GetXYZ(gyro_xyz);
+#ifdef I2C_TEST
+	  temp_value = BSP_TSENSOR_ReadTemp();
+	  hum_value = BSP_HSENSOR_ReadHumidity();
+	  baro_value = BSP_PSENSOR_ReadPressure();
+	  BSP_MAGNETO_GetXYZ(mag_xyz);
+	  BSP_ACCELERO_AccGetXYZ(acc_xyz);
+	  BSP_GYRO_GetXYZ(gyro_xyz);
+#else
+	#ifdef UART_TEST
+		  temp_value = BSP_TSENSOR_ReadTemp();
+		  hum_value = BSP_HSENSOR_ReadHumidity();
+		  baro_value = BSP_PSENSOR_ReadPressure();
+		  BSP_MAGNETO_GetXYZ(mag_xyz);
+		  BSP_ACCELERO_AccGetXYZ(acc_xyz);
+		  BSP_GYRO_GetXYZ(gyro_xyz);
+	#endif
+#endif
+
 //	  tof_value = 0;
 //	  gest_value = 0;
 
-//	  tof_value =
-//	  gest_value
+#ifdef I2C_TEST
+	  printf("temperature: %f\n", temp_value);
+	  printf("humidity: %f\n", hum_value);
+	  printf("barometer: %f\n", baro_value);
 
-//	  printf("temperature sensor value: %f\n", temp_value);
-//	  printf("humidity sensor value: %f\n", hum_value);
-//	  printf("barometer sensor value: %f\n", baro_value);
-//
-//	  printf("magnetometer sensor value: x: %f, y: %f, z: %f \n", mag_xyz[0], mag_xyz[1], mag_xyz[0]);
-//	  printf("accelerator sensor value:  x: %f, y: %f, z: %f \n", acc_xyz[0], acc_xyz[1], acc_xyz[0]);
-//	  printf("gyroscope sensor value:  x: %f, y: %f, z: %f \n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[0]);
-//
+	  printf("magnetometer: x: %f, y: %f, z: %f \n", mag_xyz[0], mag_xyz[1], mag_xyz[0]);
+	  printf("accelerator:  x: %f, y: %f, z: %f \n", acc_xyz[0], acc_xyz[1], acc_xyz[0]);
+	  printf("gyroscope:  x: %f, y: %f, z: %f \n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[0]);
+#endif
 //	  printf("--------------------\n");
-
+//
 //	  printf("time of flight sensor value: %f\n", tof_value);
 //	  printf("gesture detection sensor value: %f\n", gest_value);
+#ifdef UART_TEST
+	  int tmpInt1 = temp_value;
+	  float tmpFrac = temp_value - tmpInt1;
+	  int tmpInt2 = trunc(tmpFrac * 100);
+	  snprintf(str_tmp,100,"TEMPERATURE = %d.%0.2d\n\r", tmpInt1, tmpInt2);
+	  HAL_UART_Transmit(&huart1, (uint8_t *)str_tmp,sizeof(str_tmp), 1000);
+#endif
 
-//	  int tmpInt1 = temp_value;
-//	  float tmpFrac = temp_value - tmpInt1;
-//	  int tmpInt2 = trunc(tmpFrac * 100);
-//	  snprintf(str_tmp,100,"TEMPERATURE = %d.%0.2d\n\r", tmpInt1, tmpInt2);
-//	  HAL_UART_Transmit(&huart1, (uint8_t *)str_tmp,sizeof(str_tmp), 1000);
-//
-//	  HAL_Delay(1000);
-
-
-
-
-
-
-
+	  //HAL_Delay(100);
   }
 
 
@@ -314,8 +342,6 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
-  ADC_ChannelConfTypeDef sConfig = {0};
-
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
@@ -332,8 +358,6 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = DISABLE;
@@ -342,73 +366,9 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
-  sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
-  sConfig.Offset = 0;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
-  * @brief DAC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_DAC1_Init(void)
-{
-
-  /* USER CODE BEGIN DAC1_Init 0 */
-
-  /* USER CODE END DAC1_Init 0 */
-
-  DAC_ChannelConfTypeDef sConfig = {0};
-
-  /* USER CODE BEGIN DAC1_Init 1 */
-
-  /* USER CODE END DAC1_Init 1 */
-
-  /** DAC Initialization
-  */
-  hdac1.Instance = DAC1;
-  if (HAL_DAC_Init(&hdac1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** DAC channel OUT1 config
-  */
-  sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
-  sConfig.DAC_HighFrequency = DAC_HIGH_FREQUENCY_INTERFACE_MODE_ABOVE_80MHZ;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
-  sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** DAC channel OUT2 config
-  */
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN DAC1_Init 2 */
-
-  /* USER CODE END DAC1_Init 2 */
 
 }
 
@@ -481,7 +441,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 120;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 23;
+  htim2.Init.Period = 100000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -554,23 +514,6 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMAMUX1_CLK_ENABLE();
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -581,8 +524,8 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(myLed_GPIO_Port, myLed_Pin, GPIO_PIN_RESET);
@@ -601,62 +544,31 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(myLed_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
 
+#ifdef BUTTON_TEST
 //callback function for interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_13) { //verify pin
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
-
+		printf("======================\n");
+		printf("\n");
+		printf("Switching...\n");
+		printf("\n");
+		printf("======================\n");
+		selector++;
 		// if selector is out of range, re-initialize to 0.
-		if (selector > 7) {
+		if (selector > 5) {
 			selector = 0;
 		}
-
-		// switch between different inputs
-		switch(selector) {
-		case 0:
-			temp_value = BSP_TSENSOR_ReadTemp();
-			printf("temperature: %f\n", temp_value);
-			break;
-		case 1:
-			hum_value = BSP_HSENSOR_ReadHumidity();
-			printf("humidity: %f\n", hum_value);
-			break;
-		case 2:
-			baro_value = BSP_PSENSOR_ReadPressure();
-			printf("barometer sensor value: %f\n", baro_value);
-			break;
-		case 3:
-			BSP_MAGNETO_GetXYZ(mag_xyz);
-			printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
-			break;
-		case 4:
-			BSP_ACCELERO_AccGetXYZ(acc_xyz);
-			printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
-			break;
-		case 5:
-			BSP_GYRO_GetXYZ(gyro_xyz);
-			printf("gyroscope -> x: %f\, y: %f, z: %f\n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]);
-			break;
-		case 6:
-			printf("Not yet determined 1.\n");
-			break;
-		case 7:
-			printf("Not yet determined 2.\n");
-			break;
-		default:
-			printf("Selector not in range. Error.\n");
-		}
-		selector++;
 	}
 }
-
+#endif
 
 //function for printing to console (swb port 0)
 int _write(int file, char *ptr, int len)
@@ -671,7 +583,159 @@ int _write(int file, char *ptr, int len)
   return len;
 }
 
+#ifdef RTOS_TEST
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_pollButton */
+/**
+* @brief Function implementing the myButtonTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_pollButton */
+void pollButton(void const * argument)
+{
+  /* USER CODE BEGIN pollButton */
+  /* Infinite loop */
+  for(;;)
+  {
+	  osDelay(1);
+	  uint16_t GPIO_Pin;
+	  if (GPIO_Pin == GPIO_PIN_13) { //verify pin
+	  		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+
+	  		// if selector is out of range, re-initialize to 0.
+	  		selector++;
+	  		if (selector > 5) {
+	  			selector = 0;
+	  		}
+	  	  }
+  }
+  /* USER CODE END pollButton */
+}
+
+/* USER CODE BEGIN Header_readInput */
+/**
+* @brief Function implementing the myReadingsTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_readInput */
+void readInput(void const * argument)
+{
+  /* USER CODE BEGIN readInput */
+  /* Infinite loop */
+  for(;;)
+  {
+	  osDelay(100);
+	  switch(selector) {
+	  		case 0:
+	  			temp_value = BSP_TSENSOR_ReadTemp();
+	  			//printf("temperature: %f\n", temp_value);
+	  			char buffer[32];
+	  			char *msg = "Hello, World!\r\n";
+	  			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+	  			break;
+	  		case 1:
+	  			hum_value = BSP_HSENSOR_ReadHumidity();
+	  			//printf("humidity: %f\n", hum_value);
+	  			break;
+	  		case 2:
+	  			baro_value = BSP_PSENSOR_ReadPressure();
+	  			//printf("barometer sensor value: %f\n", baro_value);
+	  			break;
+	  		case 3:
+	  			BSP_MAGNETO_GetXYZ(mag_xyz);
+	  			//printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
+	  			break;
+	  		case 4:
+	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
+	  			//printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
+	  			break;
+	  		case 5:
+	  			BSP_GYRO_GetXYZ(gyro_xyz);
+	  			//printf("gyroscope -> x: %f\, y: %f, z: %f\n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]);
+	  			break;
+	  		default:
+	  			//printf("Selector not in range. Error.\n");
+	  			break;
+	  		}
+  }
+  /* USER CODE END readInput */
+}
+#endif
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+#ifdef RTOS_TEST
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+#endif
+#ifdef BUTTON_TEST
+  if (htim->Instance == TIM2) {
+	  switch(selector) {
+	  	  		case 0:
+	  	  			temp_value = BSP_TSENSOR_ReadTemp();
+	  	  			printf("temperature: %f\n", temp_value);
+	  	  			break;
+	  	  		case 1:
+	  	  			hum_value = BSP_HSENSOR_ReadHumidity();
+	  	  			printf("humidity: %f\n", hum_value);
+	  	  			break;
+	  	  		case 2:
+	  	  			baro_value = BSP_PSENSOR_ReadPressure();
+	  	  			printf("barometer sensor value: %f\n", baro_value);
+	  	  			break;
+	  	  		case 3:
+	  	  			BSP_MAGNETO_GetXYZ(mag_xyz);
+	  	  			printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
+	  	  			break;
+	  	  		case 4:
+	  	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
+	  	  			printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
+	  	  			break;
+	  	  		case 5:
+	  	  			BSP_GYRO_GetXYZ(gyro_xyz);
+	  	  			printf("gyroscope -> x: %f\, y: %f, z: %f\n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]);
+	  	  			break;
+	  	  		default:
+	  	  			printf("Selector not in range. Error.\n");
+	  	  		}
+
+  }
+#endif
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

@@ -22,8 +22,6 @@ Src/stm32l4s5i_iot01_tsensor.o: ../Src/stm32l4s5i_iot01_tsensor.c \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ll_adc.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h \
- ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac.h \
- ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_exti.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash_ex.h \
@@ -36,9 +34,9 @@ Src/stm32l4s5i_iot01_tsensor.o: ../Src/stm32l4s5i_iot01_tsensor.c \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h \
- c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\hts221\hts221.h \
- c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\hsensor.h \
- c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h
+ c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\hts221\hts221.h \
+ c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\common\hsensor.h \
+ c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\common\tsensor.h
 ../Inc/stm32l4s5i_iot01_tsensor.h:
 ../Inc/stm32l4s5i_iot01.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
@@ -63,8 +61,6 @@ Src/stm32l4s5i_iot01_tsensor.o: ../Src/stm32l4s5i_iot01_tsensor.c \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ll_adc.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h:
-../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac.h:
-../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_exti.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash_ex.h:
@@ -77,6 +73,6 @@ Src/stm32l4s5i_iot01_tsensor.o: ../Src/stm32l4s5i_iot01_tsensor.c \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h:
-c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\hts221\hts221.h:
-c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\hsensor.h:
-c:\users\clari\documents\w2023\ecse444\labs\ecse444_labs\lab_4\drivers\components\common\tsensor.h:
+c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\hts221\hts221.h:
+c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\common\hsensor.h:
+c:\users\tofic\desktop\winter\ 2023\ecse\ 444\lab3\git\ecse444_labs\lab_4\drivers\components\common\tsensor.h:
