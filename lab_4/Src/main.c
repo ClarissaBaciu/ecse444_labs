@@ -78,8 +78,8 @@ float gyro_xyz[3];
 float baro_value;
 float tof_value;
 float gest_value;
-char str_tmp[100] = "";
-uint8_t string_message[] = "Hello World! \n";
+char buffer[100] = ""; // used for COM communication
+int enableSelector = 0;
 
 
 
@@ -441,7 +441,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 120;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 100000;
+  htim2.Init.Period = 1000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -551,11 +551,12 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-#ifdef BUTTON_TEST
+
 //callback function for interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_13) { //verify pin
 		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+#ifdef BUTTON_TEST
 		printf("======================\n");
 		printf("\n");
 		printf("Switching...\n");
@@ -563,12 +564,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		printf("======================\n");
 		selector++;
 		// if selector is out of range, re-initialize to 0.
-		if (selector > 5) {
+		if (selector > 3) {
 			selector = 0;
 		}
+#endif
+#ifdef RTOS_TEST
+		enableSelector = 1;
+#endif
 	}
 }
-#endif
 
 //function for printing to console (swb port 0)
 int _write(int file, char *ptr, int len)
@@ -618,16 +622,23 @@ void pollButton(void const * argument)
   for(;;)
   {
 	  osDelay(1);
-	  uint16_t GPIO_Pin;
-	  if (GPIO_Pin == GPIO_PIN_13) { //verify pin
-	  		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
-
-	  		// if selector is out of range, re-initialize to 0.
-	  		selector++;
-	  		if (selector > 5) {
-	  			selector = 0;
-	  		}
-	  	  }
+//	  uint16_t GPIO_Pin;
+//	  if (GPIO_Pin == GPIO_PIN_13) { //verify pin
+//	  		HAL_GPIO_TogglePin (myLed_GPIO_Port, myLed_Pin);
+//
+//	  		// if selector is out of range, re-initialize to 0.
+//	  		selector++;
+//	  		if (selector > 5) {
+//	  			selector = 0;
+//	  		}
+//	  	  }
+	  if (enableSelector == 1) {
+		  enableSelector = 0;
+		  selector++;
+		  if (selector > 3) {
+			  selector = 0;
+		  }
+	  }
   }
   /* USER CODE END pollButton */
 }
@@ -646,33 +657,64 @@ void readInput(void const * argument)
   for(;;)
   {
 	  osDelay(100);
+
 	  switch(selector) {
 	  		case 0:
 	  			temp_value = BSP_TSENSOR_ReadTemp();
-	  			//printf("temperature: %f\n", temp_value);
-	  			char buffer[32];
-	  			char *msg = "Hello, World!\r\n";
-	  			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+	  			int tmpInt1 = temp_value;
+	  			float tmpFrac = temp_value - tmpInt1;
+	  			int tmpInt2 = trunc(tmpFrac * 100);
+	  			snprintf(buffer, 100, "TEMPERATURE: %d.%02d degrees\n\r", tmpInt1, tmpInt2);
+	  			HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 	  			break;
 	  		case 1:
 	  			hum_value = BSP_HSENSOR_ReadHumidity();
-	  			//printf("humidity: %f\n", hum_value);
+	  			int humInt1 = hum_value;
+	  			float humFrac = hum_value - tmpInt1;
+	  			int humInt2 = trunc(humFrac * 100);
+				snprintf(buffer, 100, "HUMIDITY: %d.%02d %\n\r", humInt1, humInt2);
+	  			HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 	  			break;
 	  		case 2:
 	  			baro_value = BSP_PSENSOR_ReadPressure();
-	  			//printf("barometer sensor value: %f\n", baro_value);
+	  			int baroInt1 = baro_value;
+	  			float baroFrac = baro_value - baroInt1;
+	  			int baroInt2 = trunc(baroFrac * 100);
+	  			snprintf(buffer, 100, "PRESSURE: %d.%02d Pa\n\r", baroInt1, baroInt2);
+	  			HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 	  			break;
+//	  		case 3:
+//	  			BSP_MAGNETO_GetXYZ(mag_xyz);
+//	  			int magX1 = mag_xyz[0];
+//	  			int magX2 = trunc((mag_xyz[0]-(int)mag_xyz[0])*100);
+//	  			int magY1 = mag_xyz[1];
+//	  		    int magY2 = trunc((mag_xyz[1]-(int)mag_xyz[1])*100);
+//	  		    int magZ1 = mag_xyz[2];
+//	  		  	int magZ2 = trunc((mag_xyz[2]-(int)mag_xyz[2])*100);
+//	  		    snprintf(buffer, 100, "MAGNETIC FIELD STRENGHT: %d.%02d, %d.%02d, %d.%02d GAUSS.\n\r", magX1, magX2, magY1, magY2, magZ1, magZ2);
+//	  		  	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+//	  			break;
+//	  		case 4:
+//	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
+//	  			int accX1 = acc_xyz[0];
+//	  			int accX2 = trunc((acc_xyz[0]-(int)acc_xyz[0])*100);
+//	  			int accY1 = acc_xyz[1];
+//	  			int accY2 = trunc((acc_xyz[1]-(int)acc_xyz[1])*100);
+//	  			int accZ1 = acc_xyz[2];
+//	  			int accZ2 = trunc((acc_xyz[2]-(int)acc_xyz[2])*100);
+//	  			snprintf(buffer, 100, "ACCELERATION: %d.%02d, %d.%02d, %d.%02d\n\r", accX1, accX2, accY1, accY2, accZ1, accZ2);
+//	  			HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+//	  			break;
 	  		case 3:
-	  			BSP_MAGNETO_GetXYZ(mag_xyz);
-	  			//printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
-	  			break;
-	  		case 4:
-	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
-	  			//printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
-	  			break;
-	  		case 5:
 	  			BSP_GYRO_GetXYZ(gyro_xyz);
-	  			//printf("gyroscope -> x: %f\, y: %f, z: %f\n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]);
+	  			int gyroX1 = gyro_xyz[0];
+	  			int gyroX2 = trunc((gyro_xyz[0]-(int)gyro_xyz[0])*100);
+	  			int gyroY1 = gyro_xyz[1];
+	  			int gyroY2 = trunc((gyro_xyz[1]-(int)gyro_xyz[1])*100);
+	  			int gyroZ1 = gyro_xyz[2];
+	  			int gyroZ2 = trunc((gyro_xyz[2]-(int)gyro_xyz[2])*100);
+	  			snprintf(buffer, 100, "ANGULAR VELOCITY: %d.%02d, %d.%02d, %d.%02d Deg/s\n\r", gyroX1, gyroX2, gyroY1, gyroY2, gyroZ1, gyroZ2);
+	  			HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 	  			break;
 	  		default:
 	  			//printf("Selector not in range. Error.\n");
@@ -681,6 +723,7 @@ void readInput(void const * argument)
   }
   /* USER CODE END readInput */
 }
+
 #endif
 
 /**
@@ -716,15 +759,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  	  			baro_value = BSP_PSENSOR_ReadPressure();
 	  	  			printf("barometer sensor value: %f\n", baro_value);
 	  	  			break;
+//	  	  		case 3:
+//	  	  			BSP_MAGNETO_GetXYZ(mag_xyz);
+//	  	  			printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
+//	  	  			break;
+//	  	  		case 4:
+//	  	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
+//	  	  			printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
+//	  	  			break;
 	  	  		case 3:
-	  	  			BSP_MAGNETO_GetXYZ(mag_xyz);
-	  	  			printf("magnetometer -> x: %f\, y: %f, z: %f\n", mag_xyz[0], mag_xyz[1], mag_xyz[2]);
-	  	  			break;
-	  	  		case 4:
-	  	  			BSP_ACCELERO_AccGetXYZ(acc_xyz);
-	  	  			printf("accelerometer -> x: %f\, y: %f, z: %f\n", acc_xyz[0], acc_xyz[1], acc_xyz[2]);
-	  	  			break;
-	  	  		case 5:
 	  	  			BSP_GYRO_GetXYZ(gyro_xyz);
 	  	  			printf("gyroscope -> x: %f\, y: %f, z: %f\n", gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]);
 	  	  			break;
